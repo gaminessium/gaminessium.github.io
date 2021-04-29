@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+
+<head>
+   <meta charset="utf-8">
+
+   
+   <title>パッケージマネージャーを利用して Windows に docker-cli を導入する | gaminessium.io</title>
+
+   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+   <meta name="description" content="Windows が標準で備えるパッケージマネジメント機能を利用し、下記の Docker CLI ツールを導入します。 Chocolatey Software | Docker CLI 19.03.3 検証環境: PS &gt; $PSVersionTableName                           Value----                           ----">
+<meta property="og:type" content="article">
+<meta property="og:title" content="パッケージマネージャーを利用して Windows に docker-cli を導入する">
+<meta property="og:url" content="https://gaminessium.github.io/2020/04/26/windows-package-management/index.html">
+<meta property="og:site_name" content="gaminessium.io">
+<meta property="og:description" content="Windows が標準で備えるパッケージマネジメント機能を利用し、下記の Docker CLI ツールを導入します。 Chocolatey Software | Docker CLI 19.03.3 検証環境: PS &gt; $PSVersionTableName                           Value----                           ----">
+<meta property="og:locale" content="ja_JP">
+<meta property="article:published_time" content="2020-04-26T09:50:00.000Z">
+<meta property="article:modified_time" content="2021-04-29T06:08:12.602Z">
+<meta property="article:author" content="gaminessium">
+<meta property="article:tag" content="PowerShell">
+<meta property="article:tag" content="Windows">
+<meta name="twitter:card" content="summary">
+
+   
+      <link rel="alternate" href="/atom.xml" title="gaminessium.io" type="application/atom+xml">
+   
+   
+   
+      
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+   
+
+   
+<link rel="stylesheet" href="/layout.css">
+
+
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/ocean.min.css" integrity="sha512-h/NHRaEVWoZqcVSsHytn36bln1uTHHSNqV+LPX4nLJf0p0H5gQ17fIivY+Ld8laKFJP5O5rko117FID3OW9hGQ==" crossorigin="anonymous" />
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+
+<body>
+   <div id="root">
+      <header>
+   <h1>gaminessium.io</h1>
+</header>
+
+
+      <main class="main">
+
+         <div class="article-meta">
+   <ul>
+      
+         
+         <li><time class="dt-published" datetime="2020-04-26T09:50:00.000Z" itemprop="datePublished">2020-04-26</time></li>
+      
+   </ul>
+</div>
+
+
+<div class="outer">
+   <article
+   id="post-windows-package-management"
+   class="h-entry article article-type-post"
+   itemprop="blogPost"
+   itemscope
+   itemtype="https://schema.org/BlogPosting">
+
+   <div class="article-inner">
+      
+
+
+      
+         <header class="article-header">
+            
+   
+      <h1 class="p-name article-title" itemprop="headline name">
+         パッケージマネージャーを利用して Windows に docker-cli を導入する
+      </h1>
+   
+
+
+
+            
+   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/PowerShell/" rel="tag">PowerShell</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Windows/" rel="tag">Windows</a></li></ul>
+
+
+         </header>
+      
+
+      <div class="e-content article-entry" itemprop="articleBody">
+         
+            <p>Windows が標準で備えるパッケージマネジメント機能を利用し、下記の Docker CLI ツールを導入します。</p>
+<p><a target="_blank" rel="noopener" href="https://chocolatey.org/packages/docker-cli">Chocolatey Software | Docker CLI 19.03.3</a></p>
+<p><strong>検証環境:</strong></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><code class="hljs terminal">PS &gt; $PSVersionTable<br><br>Name                           Value<br>----                           -----<br>PSVersion                      5.1.18362.752<br>PSEdition                      Desktop<br>PSCompatibleVersions           &#123;1.0, 2.0, 3.0, 4.0...&#125;<br>BuildVersion                   10.0.18362.752<br>CLRVersion                     4.0.30319.42000<br>WSManStackVersion              3.0<br>PSRemotingProtocolVersion      2.3<br>SerializationVersion           1.1.0.1<br></code></pre></td></tr></table></figure>
+<p>ここでは PowerShell Core ではなく、Windows PowerShell を利用しています。</p>
+<h1 id="パッケージプロバイダの追加"><a href="#パッケージプロバイダの追加" class="headerlink" title="パッケージプロバイダの追加"></a>パッケージプロバイダの追加</h1><p>Windows PowerShell を管理者権限で起動し、利用可能なパッケージプロバイダを確認します。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><code class="hljs terminal">PS &gt; Find-PackageProvider<br><br>Name                           Version          Source           Summary<br>----                           -------          ------           -------<br>nuget                          2.8.5.208        https:&#x2F;&#x2F;onege... NuGet provider for the OneGet meta-package manager<br>psl                            1.0.0.210        https:&#x2F;&#x2F;onege... psl provider for the OneGet meta-package manager<br>chocolatey                     2.8.5.130        https:&#x2F;&#x2F;onege... ChocolateyPrototype provider for the OneGet meta-pa...<br>PowerShellGet                  2.2.4.1          PSGallery        PowerShell module with commands for discovering, in...<br>DockerMsftProvider             1.0.0.8          PSGallery        PowerShell module with commands for discovering, in...<br>DockerProvider                 0.0.0.3          PSGallery        PowerShell module with commands for discovering, in...<br>ContainerImage                 0.6.4.0          PSGallery        This is a PackageManagement provider module which h...<br>ChocolateyGet                  1.0.0.1          PSGallery        An PowerShell OneGet provider that discovers packag...<br>NanoServerPackage              1.0.1.0          PSGallery        A PackageManagement provider to  Discover, Save and...<br>GitLabProvider                 1.3.8            PSGallery        GitLab PackageManagement provider<br>DockerMsftProviderInsider      1.0.0.2          PSGallery        PowerShell module with commands for discovering, in...<br>GistProvider                   0.6              PSGallery        Gist-as-a-Package - PackageManagement  PowerShell P...<br>GitHubProvider                 0.5              PSGallery        GitHub-as-a-Package - PackageManagement PowerShell ...<br>0install                       2.17.2           PSGallery        OneGet Package Provider for Zero Install<br>TSDProvider                    0.2              PSGallery        PowerShell PackageManager provider to search &amp; inst...<br>OfficeProvider                 1.0.0.1          PSGallery        OfficeProvider allows users to install Microsoft Of...<br>AppxGet                        0.1.0.1          PSGallery        Powershell Package Management (OneGet) Provider for...<br>MyAlbum                        0.1.2            PSGallery        MyAlbum provider discovers the photos in your remot...<br>WSAProvider                    1.0.0.4          PSGallery        Provider to Discover, Install and inventory windows...<br>ChocoOneGet                    0.4.0            PSGallery        OneGet provider for Chocolatey<br>Chocolatier                    1.0.4            PSGallery        Package Management (OneGet) provider that facilitat...<br>Pacman-Provider                0.0.1            PSGallery        Pacman provider enables installation of pacman pack...<br></code></pre></td></tr></table></figure>
+<p>これらプロバイダのうち、今回は <code>ChocolateyGet</code> を利用します。</p>
+<p><code>Install-PackageProvider</code> コマンドにより、このプロバイダを追加します。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><code class="hljs terminal">PS &gt; Install-PackageProvider ChocolateyGet -Force<br><br>Name                           Version          Source           Summary<br>----                           -------          ------           -------<br>ChocolateyGet                  1.0.0.1          PSGallery        An PowerShell OneGet provider that discovers packag...<br></code></pre></td></tr></table></figure>
+<h1 id="Docker-CLI-ツールの導入"><a href="#Docker-CLI-ツールの導入" class="headerlink" title="Docker CLI ツールの導入"></a>Docker CLI ツールの導入</h1><p>まず、プロバイダにパッケージが登録されているか確認します。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><code class="hljs terminal">PS &gt; Find-Package docker-cli -ProviderName ChocolateyGet<br><br>Name                           Version          Source           Summary<br>----                           -------          ------           -------<br>docker-cli                     19.03.3          https:&#x2F;&#x2F;www.c...<br></code></pre></td></tr></table></figure>
+<p>パッケージをインストールするには、<code>Install-Package</code> コマンドを利用します。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><code class="hljs terminal">PS &gt; Install-Package docker-cli -ProviderName ChocolateyGet -Force<br><br>Name                           Version          Source           Summary<br>----                           -------          ------           -------<br>docker-cli                     v19.03.3         https:&#x2F;&#x2F;www.c...<br></code></pre></td></tr></table></figure>
+<p>インストールが完了すると、以下の通り <code>docker</code> コマンドが利用可能になります。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><code class="hljs terminal">PS &gt; docker version<br>Client:<br> Version:           19.03.3<br> API version:       1.40<br> Go version:        go1.12.10<br> Git commit:        2355349d-<br> Built:             10&#x2F;14&#x2F;2019 16:41:26<br> OS&#x2F;Arch:           windows&#x2F;amd64<br> Experimental:      false<br>error during connect: Get http:&#x2F;&#x2F;%2F%2F.%2Fpipe%2Fdocker_engine&#x2F;v1.40&#x2F;version: open &#x2F;&#x2F;.&#x2F;pipe&#x2F;docker_engine: The system cannot find the file specified. In the default daemon configuration on Windows, the docker client must be run elevated to connect. This error may also indicate that the docker daemon is not running.<br></code></pre></td></tr></table></figure>
+<p>Docker のデーモンが起動していないためエラーメッセージが出力されていますが、リモートの Docker ホスト等に接続すればローカルで実行する場合と同様に Docker を利用できると思います。</p>
+<p><strong>参考:</strong></p>
+<ul>
+<li> <a target="_blank" rel="noopener" href="https://qiita.com/japboy/items/451cf30fd0d763d98ae6">Windows 10 のパッケージ管理エコシステムについて整理する。 - Qiita</a></li>
+<li> <a target="_blank" rel="noopener" href="https://qiita.com/k_takashi0309/items/3992b8ee68c256202bcf">Windows の PackageManagement についての知見まとめ - Qiita</a></li>
+<li> <a target="_blank" rel="noopener" href="https://qiita.com/cogome/items/6cae0c402413e40ac479">Windows10 のパッケージ管理 - Qiita</a></li>
+<li> <a target="_blank" rel="noopener" href="https://qiita.com/akiakishitai/items/7921133d75e0dce6afa4">PackageManagement ＋ ChocolateyGet によるパッケージ管理 - Qiita</a></li>
+</ul>
+
+         
+      </div>
+
+      <footer class="article-footer">
+         <a data-url="https://gaminessium.github.io/2020/04/26/windows-package-management/" data-id="cko2hkr3e0007gyn9bqxr4y4i" data-title="パッケージマネージャーを利用して Windows に docker-cli を導入する" class="article-share-link">
+            <a target="_blank" rel="noopener" href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false">Tweet</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+         </a>
+
+         
+
+         
+      </footer>
+   </div>
+
+   
+      
+   <nav id="article-nav">
+      
+         <a href="/2020/12/12/blazor-use-js-library/"
+            id="article-nav-newer"
+            class="article-nav-link-wrap"
+            >Blazor から JavaScript ライブラリを利用する</a>
+      
+
+      
+         <a href="/2020/04/06/powershell-use-aws-client-container/"
+            id="article-nav-older"
+            class="article-nav-link-wrap"
+            >PowerShell から amazon/aws-cli の Docker イメージを起動して AWS に接続する</a>
+      
+   </nav>
+
+
+   
+</article>
+
+
+
+
+
+</div>
+
+
+      </main>
+
+      <footer class="footer">
+   <aside id="sidebar">
+   
+      
+   <div class="widget-wrap">
+      <h3 class="widget-title">categories</h3>
+      <div class="widget">
+         <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/NET/">.NET</a><span class="category-list-count">1</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/NET/ASP-NET/">ASP.NET</a><span class="category-list-count">1</span></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/PowerShell/">PowerShell</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Windows/">Windows</a><span class="category-list-count">1</span></li></ul>
+      </div>
+   </div>
+
+
+   
+</aside>
+
+
+   <small>&copy; 2021 gaminessium</small>
+</footer>
+
+   </div>
+</body>
+
+</html>

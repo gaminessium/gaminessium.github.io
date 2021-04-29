@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+
+<head>
+   <meta charset="utf-8">
+
+   
+   <title>PowerShell から amazon/aws-cli の Docker イメージを起動して AWS に接続する | gaminessium.io</title>
+
+   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+   <meta name="description" content="AWS CLI の Docker イメージが公開されたので、Docker for Windows + PowerShell という環境から、これを利用する手順について確認しました。 参考:   AWS 公式さんが Docker Hub で aws-cli のイメージを公開してくれた！ - Qiita  AWS CLI v2 Docker image | AWS Developer Blog  動作">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PowerShell から amazon&#x2F;aws-cli の Docker イメージを起動して AWS に接続する">
+<meta property="og:url" content="https://gaminessium.github.io/2020/04/06/powershell-use-aws-client-container/index.html">
+<meta property="og:site_name" content="gaminessium.io">
+<meta property="og:description" content="AWS CLI の Docker イメージが公開されたので、Docker for Windows + PowerShell という環境から、これを利用する手順について確認しました。 参考:   AWS 公式さんが Docker Hub で aws-cli のイメージを公開してくれた！ - Qiita  AWS CLI v2 Docker image | AWS Developer Blog  動作">
+<meta property="og:locale" content="ja_JP">
+<meta property="article:published_time" content="2020-04-06T09:22:00.000Z">
+<meta property="article:modified_time" content="2021-04-29T06:08:12.602Z">
+<meta property="article:author" content="gaminessium">
+<meta property="article:tag" content="PowerShell">
+<meta property="article:tag" content="Docker">
+<meta property="article:tag" content="AWS">
+<meta name="twitter:card" content="summary">
+
+   
+      <link rel="alternate" href="/atom.xml" title="gaminessium.io" type="application/atom+xml">
+   
+   
+   
+      
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+   
+
+   
+<link rel="stylesheet" href="/layout.css">
+
+
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/ocean.min.css" integrity="sha512-h/NHRaEVWoZqcVSsHytn36bln1uTHHSNqV+LPX4nLJf0p0H5gQ17fIivY+Ld8laKFJP5O5rko117FID3OW9hGQ==" crossorigin="anonymous" />
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+
+<body>
+   <div id="root">
+      <header>
+   <h1>gaminessium.io</h1>
+</header>
+
+
+      <main class="main">
+
+         <div class="article-meta">
+   <ul>
+      
+         
+            
+               <li><a href="/categories/PowerShell/">PowerShell</a></li>
+            
+         
+         <li><time class="dt-published" datetime="2020-04-06T09:22:00.000Z" itemprop="datePublished">2020-04-06</time></li>
+      
+   </ul>
+</div>
+
+
+<div class="outer">
+   <article
+   id="post-powershell-use-aws-client-container"
+   class="h-entry article article-type-post"
+   itemprop="blogPost"
+   itemscope
+   itemtype="https://schema.org/BlogPosting">
+
+   <div class="article-inner">
+      
+
+
+      
+         <header class="article-header">
+            
+   
+      <h1 class="p-name article-title" itemprop="headline name">
+         PowerShell から amazon/aws-cli の Docker イメージを起動して AWS に接続する
+      </h1>
+   
+
+
+
+            
+   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/AWS/" rel="tag">AWS</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Docker/" rel="tag">Docker</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/PowerShell/" rel="tag">PowerShell</a></li></ul>
+
+
+         </header>
+      
+
+      <div class="e-content article-entry" itemprop="articleBody">
+         
+            <p>AWS CLI の Docker イメージが公開されたので、Docker for Windows + PowerShell という環境から、これを利用する手順について確認しました。</p>
+<p><strong>参考:</strong></p>
+<ul>
+<li> <a target="_blank" rel="noopener" href="https://qiita.com/kai_kou/items/cfb7c1d6a449e0da68d1">AWS 公式さんが Docker Hub で aws-cli のイメージを公開してくれた！ - Qiita</a></li>
+<li> <a target="_blank" rel="noopener" href="https://aws.amazon.com/jp/blogs/developer/aws-cli-v2-docker-image/">AWS CLI v2 Docker image | AWS Developer Blog</a></li>
+</ul>
+<p>動作環境は以下の通りです。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><code class="hljs plain">PS &gt; docker --version<br>Docker version 19.03.6, build 369ce74a3c<br><br>PS &gt; $PSVersionTable<br><br>Name                           Value<br>----                           -----<br>PSVersion                      6.2.4<br>PSEdition                      Core<br>GitCommitId                    6.2.4<br>OS                             Microsoft Windows 10.0.18363<br>Platform                       Win32NT<br>PSCompatibleVersions           &#123;1.0, 2.0, 3.0, 4.0…&#125;<br>PSRemotingProtocolVersion      2.3<br>SerializationVersion           1.1.0.1<br>WSManStackVersion              3.0<br></code></pre></td></tr></table></figure>
+<h1 id="Docker-イメージの参照"><a href="#Docker-イメージの参照" class="headerlink" title="Docker イメージの参照"></a>Docker イメージの参照</h1><p>まずは Docker イメージを pull します。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><code class="hljs plain">PS &gt; docker pull amazon&#x2F;aws-cli<br>Using default tag: latest<br>latest: Pulling from amazon&#x2F;aws-cli<br>a7583ef20c9d: Pull complete<br>7d4c8ec0c058: Pull complete<br>cd590779e8ea: Pull complete<br>a37a98af08a9: Pull complete<br>0a765160c849: Pull complete<br>Digest: sha256:7a27c26c2937a3d0b84171675709df1dc09aa331e86cad90f74ada6df7b59c89<br>Status: Downloaded newer image for amazon&#x2F;aws-cli:latest<br>docker.io&#x2F;amazon&#x2F;aws-cli:latest<br></code></pre></td></tr></table></figure>
+<p><code>docker run</code> により、CLI ツールのバージョンが返ってくることを確認します。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><code class="hljs plain">PS &gt; docker run --rm -ti amazon&#x2F;aws-cli --version<br>aws-cli&#x2F;2.0.6 Python&#x2F;3.7.3 Linux&#x2F;4.15.0-91-generic botocore&#x2F;2.0.0dev10<br></code></pre></td></tr></table></figure>
+<h1 id="PowerShell-関数として定義"><a href="#PowerShell-関数として定義" class="headerlink" title="PowerShell 関数として定義"></a>PowerShell 関数として定義</h1><p>以降のコマンドを簡略化するため、コマンドを関数として定義します。まずは PowerShell プロファイルのパスを確認します。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><code class="hljs plain">PS &gt; echo $PROFILE<br>C:\Users\__USER_NAME__\Documents\PowerShell\Microsoft.PowerShell_profile.ps1<br></code></pre></td></tr></table></figure>
+<p>プロファイルを編集し、以下の記述を追加します。</p>
+<figure class="highlight powershell"><table><tr><td class="code"><pre><code class="hljs powershell"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">aws</span></span> &#123;<br>   <span class="hljs-variable">$location</span> = <span class="hljs-built_in">Get-Location</span><br>   docker run -<span class="hljs-literal">-rm</span> <span class="hljs-literal">-v</span> <span class="hljs-variable">$</span>&#123;HOME&#125;/.aws:/root/.aws <span class="hljs-literal">-v</span> <span class="hljs-variable">$</span>&#123;location&#125;:/aws amazon/aws<span class="hljs-literal">-cli</span> <span class="hljs-variable">$Args</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<p>PowerShell を再起動し、関数が利用できることを確認します。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><code class="hljs plain">PS &gt; aws --version<br>aws-cli&#x2F;2.0.6 Python&#x2F;3.7.3 Linux&#x2F;4.15.0-91-generic botocore&#x2F;2.0.0dev10<br></code></pre></td></tr></table></figure>
+<h1 id="AWS-への接続設定"><a href="#AWS-への接続設定" class="headerlink" title="AWS への接続設定"></a>AWS への接続設定</h1><p>次に、AWS 接続用の設定ファイルを生成します。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><code class="hljs plain">PS &gt; aws configure<br>AWS Access Key ID [None]: AKIA****************<br>AWS Secret Access Key [None]: ****************************************<br>Default region name [None]: ap-northeast-1<br>Default output format [None]: json<br></code></pre></td></tr></table></figure>
+<p>これにより、以下の設定ファイルが生成されたことを確認できます。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><code class="hljs plain">PS &gt; ls $HOME\.aws<br><br><br>    Directory: C:\Users\__USER_NAME__\.aws<br><br>Mode                LastWriteTime         Length Name<br>----                -------------         ------ ----<br>-a----        2020&#x2F;04&#x2F;06    16:59             48 config<br>-a----        2020&#x2F;04&#x2F;06    16:59            116 credentials<br></code></pre></td></tr></table></figure>
+<p>チュートリアルに合わせ、S3 上のディレクトリを参照してみます。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><code class="hljs plain">PS &gt; aws s3 ls<br>2020-03-31 00:47:53 test<br></code></pre></td></tr></table></figure>
+<p>S3 上にバケットが存在していれば、その一覧が応答で返ってきます。これにより、AWS サービスとの接続が確認できました。</p>
+
+         
+      </div>
+
+      <footer class="article-footer">
+         <a data-url="https://gaminessium.github.io/2020/04/06/powershell-use-aws-client-container/" data-id="cko2hkr3c0006gyn9bzht5iga" data-title="PowerShell から amazon/aws-cli の Docker イメージを起動して AWS に接続する" class="article-share-link">
+            <a target="_blank" rel="noopener" href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false">Tweet</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+         </a>
+
+         
+
+         
+      </footer>
+   </div>
+
+   
+      
+   <nav id="article-nav">
+      
+         <a href="/2020/04/26/windows-package-management/"
+            id="article-nav-newer"
+            class="article-nav-link-wrap"
+            >パッケージマネージャーを利用して Windows に docker-cli を導入する</a>
+      
+
+      
+         <a href="/2019/10/16/powershell-call-backlog-api/"
+            id="article-nav-older"
+            class="article-nav-link-wrap"
+            >PowerShell から Backlog API を呼び出して課題を登録する</a>
+      
+   </nav>
+
+
+   
+</article>
+
+
+
+
+
+</div>
+
+
+      </main>
+
+      <footer class="footer">
+   <aside id="sidebar">
+   
+      
+   <div class="widget-wrap">
+      <h3 class="widget-title">categories</h3>
+      <div class="widget">
+         <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/NET/">.NET</a><span class="category-list-count">1</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/NET/ASP-NET/">ASP.NET</a><span class="category-list-count">1</span></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/PowerShell/">PowerShell</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Windows/">Windows</a><span class="category-list-count">1</span></li></ul>
+      </div>
+   </div>
+
+
+   
+</aside>
+
+
+   <small>&copy; 2021 gaminessium</small>
+</footer>
+
+   </div>
+</body>
+
+</html>

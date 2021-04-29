@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+
+<head>
+   <meta charset="utf-8">
+
+   
+   <title>PowerShell から Backlog API を呼び出して課題を登録する | gaminessium.io</title>
+
+   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+   <meta name="description" content="Backlog を利用していて、複数件の課題を手作業で登録するのが手間だったため、スクリプトとして処理できるようにしました。 環境PS&gt; $PSVersionTableName                           Value----                           -----PSVersion                      6.2.2PSEdi">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PowerShell から Backlog API を呼び出して課題を登録する">
+<meta property="og:url" content="https://gaminessium.github.io/2019/10/16/powershell-call-backlog-api/index.html">
+<meta property="og:site_name" content="gaminessium.io">
+<meta property="og:description" content="Backlog を利用していて、複数件の課題を手作業で登録するのが手間だったため、スクリプトとして処理できるようにしました。 環境PS&gt; $PSVersionTableName                           Value----                           -----PSVersion                      6.2.2PSEdi">
+<meta property="og:locale" content="ja_JP">
+<meta property="article:published_time" content="2019-10-16T14:07:00.000Z">
+<meta property="article:modified_time" content="2021-04-29T06:08:12.602Z">
+<meta property="article:author" content="gaminessium">
+<meta property="article:tag" content="PowerShell">
+<meta property="article:tag" content="Backlog">
+<meta name="twitter:card" content="summary">
+
+   
+      <link rel="alternate" href="/atom.xml" title="gaminessium.io" type="application/atom+xml">
+   
+   
+   
+      
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+   
+
+   
+<link rel="stylesheet" href="/layout.css">
+
+
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/ocean.min.css" integrity="sha512-h/NHRaEVWoZqcVSsHytn36bln1uTHHSNqV+LPX4nLJf0p0H5gQ17fIivY+Ld8laKFJP5O5rko117FID3OW9hGQ==" crossorigin="anonymous" />
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+
+<body>
+   <div id="root">
+      <header>
+   <h1>gaminessium.io</h1>
+</header>
+
+
+      <main class="main">
+
+         <div class="article-meta">
+   <ul>
+      
+         
+            
+               <li><a href="/categories/PowerShell/">PowerShell</a></li>
+            
+         
+         <li><time class="dt-published" datetime="2019-10-16T14:07:00.000Z" itemprop="datePublished">2019-10-16</time></li>
+      
+   </ul>
+</div>
+
+
+<div class="outer">
+   <article
+   id="post-powershell-call-backlog-api"
+   class="h-entry article article-type-post"
+   itemprop="blogPost"
+   itemscope
+   itemtype="https://schema.org/BlogPosting">
+
+   <div class="article-inner">
+      
+
+
+      
+         <header class="article-header">
+            
+   
+      <h1 class="p-name article-title" itemprop="headline name">
+         PowerShell から Backlog API を呼び出して課題を登録する
+      </h1>
+   
+
+
+
+            
+   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Backlog/" rel="tag">Backlog</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/PowerShell/" rel="tag">PowerShell</a></li></ul>
+
+
+         </header>
+      
+
+      <div class="e-content article-entry" itemprop="articleBody">
+         
+            <p>Backlog を利用していて、複数件の課題を手作業で登録するのが手間だったため、スクリプトとして処理できるようにしました。</p>
+<h4 id="環境"><a href="#環境" class="headerlink" title="環境"></a>環境</h4><figure class="highlight powershell"><table><tr><td class="code"><pre><code class="hljs powershell"><span class="hljs-built_in">PS</span>&gt; <span class="hljs-variable">$PSVersionTable</span><br><br>Name                           Value<br>----                           -----<br>PSVersion                      <span class="hljs-number">6.2</span>.<span class="hljs-number">2</span><br>PSEdition                      Core<br>GitCommitId                    <span class="hljs-number">6.2</span>.<span class="hljs-number">2</span><br>OS                             Microsoft Windows <span class="hljs-number">10.0</span>.<span class="hljs-number">18362</span><br>Platform                       Win32NT<br>PSCompatibleVersions           &#123;<span class="hljs-number">1.0</span>, <span class="hljs-number">2.0</span>, <span class="hljs-number">3.0</span>, <span class="hljs-number">4.0</span>…&#125;<br>PSRemotingProtocolVersion      <span class="hljs-number">2.3</span><br>SerializationVersion           <span class="hljs-number">1.1</span>.<span class="hljs-number">0.1</span><br>WSManStackVersion              <span class="hljs-number">3.0</span><br></code></pre></td></tr></table></figure>
+<h2 id="API-仕様を確認"><a href="#API-仕様を確認" class="headerlink" title="API 仕様を確認"></a>API 仕様を確認</h2><p>まず、Backlog API のリファレンスを確認します。</p>
+<ul>
+<li> <a target="_blank" rel="noopener" href="https://developer.nulab.com/ja/docs/backlog/auth/">認証と認可 | Backlog Developer API | Nulab</a></li>
+<li> <a target="_blank" rel="noopener" href="https://developer.nulab.com/ja/docs/backlog/api/2/add-issue/">課題の追加 | Backlog Developer API | Nulab</a></li>
+</ul>
+<p>Backlog ユーザーの認証方法として、ここでは API キーを利用しています。リファレンスに従い、Backlog の個人設定から API キー文字列を発行しておいてください。</p>
+<h2 id="送信パラメーターの概要"><a href="#送信パラメーターの概要" class="headerlink" title="送信パラメーターの概要"></a>送信パラメーターの概要</h2><p>上記リファレンスにより、課題登録のために必須のパラメーターは以下であることがわかります。</p>
+<table>
+<thead>
+<tr>
+<th>パラメーター名</th>
+<th>型</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>projectId</td>
+<td>数値</td>
+<td>課題を登録するプロジェクトの ID</td>
+</tr>
+<tr>
+<td>summary</td>
+<td>文字列</td>
+<td>課題の件名</td>
+</tr>
+<tr>
+<td>issueTypeId</td>
+<td>数値</td>
+<td>課題の種別の ID</td>
+</tr>
+<tr>
+<td>priorityId</td>
+<td>数値</td>
+<td>課題の優先度の ID</td>
+</tr>
+</tbody></table>
+<p><code>projectId</code> は利用している Backlog スペース内のプロジェクトの ID で、画面上から確認できるプロジェクト名とは異なります。<code>summary</code> は課題の件名を表します。</p>
+<p>このほか <code>issueTypeId</code> は課題のカテゴリーを、<code>priorityId</code> は課題の優先度を表しています。<code>summary</code> の項目以外は、数値で表される ID を指定するところに注意が必要です。</p>
+<p>各 ID は以下の API から確認することができます。</p>
+<ul>
+<li> <a target="_blank" rel="noopener" href="https://developer.nulab.com/ja/docs/backlog/api/2/get-project-list/">プロジェクト一覧の取得 | Backlog Developer API | Nulab</a></li>
+<li> <a target="_blank" rel="noopener" href="https://developer.nulab.com/ja/docs/backlog/api/2/get-issue-type-list/">種別一覧の取得 | Backlog Developer API | Nulab</a></li>
+<li> <a target="_blank" rel="noopener" href="https://developer.nulab.com/ja/docs/backlog/api/2/get-priority-list/">優先度一覧の取得 | Backlog Developer API | Nulab</a></li>
+</ul>
+<h2 id="サンプルコード"><a href="#サンプルコード" class="headerlink" title="サンプルコード"></a>サンプルコード</h2><p>これらのパラメーターを設定し、PowerShell から Backlog API へ課題を登録するサンプルが以下になります。</p>
+<figure class="highlight powershell"><table><tr><td class="code"><pre><code class="hljs powershell"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">New-Issue</span></span> &#123;<br>  <span class="hljs-keyword">param</span> (<br>    <span class="hljs-variable">$Space</span>,<br>    <span class="hljs-variable">$ApiKey</span>,<br>    <span class="hljs-variable">$ProjectId</span>,<br>    <span class="hljs-variable">$IssueTypeId</span>,<br>    <span class="hljs-variable">$PriorityId</span>,<br>    <span class="hljs-variable">$Summary</span><br>  )<br>​<br>  <span class="hljs-variable">$body</span> = <span class="hljs-selector-tag">@</span>&#123;<br>    projectId   = <span class="hljs-variable">$ProjectId</span>;<br>    summary     = <span class="hljs-variable">$Summary</span>;<br>    issueTypeId = <span class="hljs-variable">$IssueTypeId</span>;<br>    priorityId  = <span class="hljs-variable">$PriorityId</span>;<br>  &#125;<br><br>  <span class="hljs-variable">$api</span> = <span class="hljs-string">&#x27;issues&#x27;</span><br>  <span class="hljs-variable">$url</span> = <span class="hljs-string">&quot;https://<span class="hljs-variable">$Space</span>.backlog.jp/api/v2/<span class="hljs-variable">$</span>(<span class="hljs-variable">$api</span>)?apiKey=<span class="hljs-variable">$ApiKey</span>&quot;</span><br>​<br>  <span class="hljs-comment"># 課題の作成に成功すると 201 (Created) が返ってくる</span><br>  (<span class="hljs-built_in">Invoke-WebRequest</span> <span class="hljs-variable">$url</span> <span class="hljs-literal">-Method</span> Post <span class="hljs-literal">-Body</span> <span class="hljs-variable">$body</span>).StatusCode<br>&#125;<br><br><span class="hljs-comment"># 使用例</span><br><span class="hljs-built_in">New-Issue</span> <span class="hljs-literal">-Space</span> <span class="hljs-string">&#x27;myspace&#x27;</span> <span class="hljs-literal">-ApiKey</span> <span class="hljs-string">&#x27;xXxXxXx&#x27;</span> <span class="hljs-literal">-ProjectId</span> <span class="hljs-number">123456</span> <span class="hljs-literal">-IssueTypeId</span> <span class="hljs-number">999999</span> <span class="hljs-literal">-PriorityId</span> <span class="hljs-number">3</span> <span class="hljs-literal">-Summary</span> <span class="hljs-string">&#x27;test task&#x27;</span><br></code></pre></td></tr></table></figure>
+<p><code>New-Issue</code> 関数に渡した各種パラメーターをもとに、任意の Backlog プロジェクトへ Post しています。必要に応じて、API リファレンスを参考にパラメーターを追加してください。</p>
+<p>SSL 通信のエラーが原因で <code>Invoke-WebRequest</code> が失敗する場合は、下記のスクリプトを実行して TLS 1.2 を有効化してみてください。</p>
+<figure class="highlight powershell"><table><tr><td class="code"><pre><code class="hljs powershell">[<span class="hljs-type">Net.ServicePointManager</span>]::SecurityProtocol = [<span class="hljs-type">Net.SecurityProtocolType</span>]::Tls12<br></code></pre></td></tr></table></figure>
+<h4 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h4><ul>
+<li> <a target="_blank" rel="noopener" href="https://qiita.com/gam0022/items/404eacf974c406c2c76e">Backlog の課題追加の API で分かりにくい点 - Qiita</a></li>
+<li> <a target="_blank" rel="noopener" href="https://qiita.com/zaki-lknr/items/8950f6acea20961a8afc">curl/PowerShell で HTTP アクセスいろいろ - Qiita</a></li>
+<li> <a target="_blank" rel="noopener" href="https://docs.microsoft.com/ja-jp/powershell/module/microsoft.powershell.utility/invoke-webrequest?view=powershell-6">Invoke-WebRequest</a></li>
+<li> <a target="_blank" rel="noopener" href="https://docs.microsoft.com/ja-jp/dotnet/api/system.net.securityprotocoltype">SecurityProtocolType Enum (System.Net) | Microsoft Docs</a></li>
+</ul>
+
+         
+      </div>
+
+      <footer class="article-footer">
+         <a data-url="https://gaminessium.github.io/2019/10/16/powershell-call-backlog-api/" data-id="cko2hkr380003gyn92vokfir2" data-title="PowerShell から Backlog API を呼び出して課題を登録する" class="article-share-link">
+            <a target="_blank" rel="noopener" href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false">Tweet</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+         </a>
+
+         
+
+         
+      </footer>
+   </div>
+
+   
+      
+   <nav id="article-nav">
+      
+         <a href="/2020/04/06/powershell-use-aws-client-container/"
+            id="article-nav-newer"
+            class="article-nav-link-wrap"
+            >PowerShell から amazon/aws-cli の Docker イメージを起動して AWS に接続する</a>
+      
+
+      
+   </nav>
+
+
+   
+</article>
+
+
+
+
+
+</div>
+
+
+      </main>
+
+      <footer class="footer">
+   <aside id="sidebar">
+   
+      
+   <div class="widget-wrap">
+      <h3 class="widget-title">categories</h3>
+      <div class="widget">
+         <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/NET/">.NET</a><span class="category-list-count">1</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/NET/ASP-NET/">ASP.NET</a><span class="category-list-count">1</span></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/PowerShell/">PowerShell</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Windows/">Windows</a><span class="category-list-count">1</span></li></ul>
+      </div>
+   </div>
+
+
+   
+</aside>
+
+
+   <small>&copy; 2021 gaminessium</small>
+</footer>
+
+   </div>
+</body>
+
+</html>

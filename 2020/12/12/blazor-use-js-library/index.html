@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+
+<head>
+   <meta charset="utf-8">
+
+   
+   <title>Blazor から JavaScript ライブラリを利用する | gaminessium.io</title>
+
+   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+   <meta name="description" content="ブラウザー内で C# のコードを実行できる Blazor ですが、DOM 要素を操作するには JavaScript による処理に頼る必要があります。 この記事では、Blazor における C# と JavaScript との相互運用 (JavaScript Interop) 、また同機能を用いた JavaScript ライブラリの利用方法について解説します。 環境:   .NET 5  Blazo">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Blazor から JavaScript ライブラリを利用する">
+<meta property="og:url" content="https://gaminessium.github.io/2020/12/12/blazor-use-js-library/index.html">
+<meta property="og:site_name" content="gaminessium.io">
+<meta property="og:description" content="ブラウザー内で C# のコードを実行できる Blazor ですが、DOM 要素を操作するには JavaScript による処理に頼る必要があります。 この記事では、Blazor における C# と JavaScript との相互運用 (JavaScript Interop) 、また同機能を用いた JavaScript ライブラリの利用方法について解説します。 環境:   .NET 5  Blazo">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:image" content="https://gaminessium.github.io/img/20201212_01.png">
+<meta property="og:image" content="https://gaminessium.github.io/img/20201212_02.png">
+<meta property="article:published_time" content="2020-12-12T07:12:00.000Z">
+<meta property="article:modified_time" content="2021-04-29T06:08:12.602Z">
+<meta property="article:author" content="gaminessium">
+<meta property="article:tag" content="Blazor">
+<meta property="article:tag" content="C#">
+<meta property="article:tag" content="JavaScript">
+<meta property="article:tag" content="WebAssembly">
+<meta property="article:tag" content="ASP.NET">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gaminessium.github.io/img/20201212_01.png">
+
+   
+      <link rel="alternate" href="/atom.xml" title="gaminessium.io" type="application/atom+xml">
+   
+   
+   
+      
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+   
+
+   
+<link rel="stylesheet" href="/layout.css">
+
+
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/ocean.min.css" integrity="sha512-h/NHRaEVWoZqcVSsHytn36bln1uTHHSNqV+LPX4nLJf0p0H5gQ17fIivY+Ld8laKFJP5O5rko117FID3OW9hGQ==" crossorigin="anonymous" />
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+
+<body>
+   <div id="root">
+      <header>
+   <h1>gaminessium.io</h1>
+</header>
+
+
+      <main class="main">
+
+         <div class="article-meta">
+   <ul>
+      
+         
+            
+               <li><a href="/categories/NET/">.NET</a></li>
+            
+               <li><a href="/categories/NET/ASP-NET/">ASP.NET</a></li>
+            
+               <li><a href="/categories/NET/ASP-NET/Blazor/">Blazor</a></li>
+            
+         
+         <li><time class="dt-published" datetime="2020-12-12T07:12:00.000Z" itemprop="datePublished">2020-12-12</time></li>
+      
+   </ul>
+</div>
+
+
+<div class="outer">
+   <article
+   id="post-blazor-use-js-library"
+   class="h-entry article article-type-post"
+   itemprop="blogPost"
+   itemscope
+   itemtype="https://schema.org/BlogPosting">
+
+   <div class="article-inner">
+      
+
+
+      
+         <header class="article-header">
+            
+   
+      <h1 class="p-name article-title" itemprop="headline name">
+         Blazor から JavaScript ライブラリを利用する
+      </h1>
+   
+
+
+
+            
+   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ASP-NET/" rel="tag">ASP.NET</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Blazor/" rel="tag">Blazor</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/C/" rel="tag">C#</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/JavaScript/" rel="tag">JavaScript</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/WebAssembly/" rel="tag">WebAssembly</a></li></ul>
+
+
+         </header>
+      
+
+      <div class="e-content article-entry" itemprop="articleBody">
+         
+            <p>ブラウザー内で C# のコードを実行できる Blazor ですが、DOM 要素を操作するには JavaScript による処理に頼る必要があります。</p>
+<p>この記事では、Blazor における C# と JavaScript との相互運用 (JavaScript Interop) 、また同機能を用いた JavaScript ライブラリの利用方法について解説します。</p>
+<p><strong>環境:</strong></p>
+<ul>
+<li> .NET 5</li>
+<li> Blazor WebAssembly</li>
+</ul>
+<h2 id="JavaScript-Interop-の挙動を確認する"><a href="#JavaScript-Interop-の挙動を確認する" class="headerlink" title="JavaScript Interop の挙動を確認する"></a>JavaScript Interop の挙動を確認する</h2><p>Blazor で JavaScript Interop を利用する際は、以下のステップが必要になります。</p>
+<ol>
+<li><code>/wwwroot</code> 配下に JavaScript モジュールを配置する</li>
+<li>C# から JavaScript モジュールをインポートする</li>
+<li>モジュールが公開している関数を C# から呼び出す</li>
+</ol>
+<p>まず、呼び出される JavaScript モジュールを以下の通り定義します。</p>
+<p>:wwwroot/js/interop-sample.js</p>
+<figure class="highlight js"><table><tr><td class="code"><pre><code class="hljs js"><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">outputLog</span>(<span class="hljs-params">obj</span>) </span>&#123;<br>   <span class="hljs-built_in">console</span>.log(<span class="hljs-keyword">typeof</span> obj, obj);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>C# のソースコードから上記モジュールをインポートし、関数を呼び出します。まず、次の名前空間への参照を追加します。</p>
+<p>:InteropSample.razor</p>
+<figure class="highlight c#"><table><tr><td class="code"><pre><code class="hljs c#">@inject IJSRuntime JSRuntime<br></code></pre></td></tr></table></figure>
+<p>これにより、以下の手順で JavaScript モジュールを参照できます。</p>
+<figure class="highlight c#"><table><tr><td class="code"><pre><code class="hljs c#"><span class="hljs-keyword">var</span> module = <span class="hljs-keyword">await</span> JSRuntime.InvokeAsync&lt;IJSObjectReference&gt;(<br>   <span class="hljs-string">&quot;import&quot;</span>, <span class="hljs-string">&quot;./js/interop-sample.js&quot;</span><br>);<br><br><span class="hljs-keyword">await</span> module.InvokeVoidAsync(<span class="hljs-string">&quot;outputLog&quot;</span>, <span class="hljs-string">&quot;my first interop.&quot;</span>);<br></code></pre></td></tr></table></figure>
+<p><code>InvokeVoidAsync()</code> では、実行する関数名を第一引数で、関数へ渡す引数項目をそれ以降の引数で指定します。</p>
+<p>これにより引数 <code>obj</code> へ渡した値の型 <code>string</code> とその内容 <code>&quot;my first interop&quot;</code> が、ブラウザーのコンソール上へ出力されます。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><code class="hljs log">string my first interop.<br></code></pre></td></tr></table></figure>
+<p>引数として渡せる値は JavaScript 向けに変換が行われます。変換結果の例としては以下の通りです。</p>
+<figure class="highlight c#"><table><tr><td class="code"><pre><code class="hljs c#"><span class="hljs-keyword">await</span> module.InvokeVoidAsync(<span class="hljs-string">&quot;outputLog&quot;</span>, <span class="hljs-literal">null</span>);<br><span class="hljs-keyword">await</span> module.InvokeVoidAsync(<span class="hljs-string">&quot;outputLog&quot;</span>, <span class="hljs-literal">true</span>);<br><span class="hljs-keyword">await</span> module.InvokeVoidAsync(<span class="hljs-string">&quot;outputLog&quot;</span>, <span class="hljs-literal">false</span>);<br><span class="hljs-comment">// null は undefined へ、bool は boolean へそれぞれ変換される。</span><br><span class="hljs-comment">//   undefined undefined</span><br><span class="hljs-comment">//   boolean true</span><br><span class="hljs-comment">//   boolean false</span><br><br><span class="hljs-keyword">await</span> module.InvokeVoidAsync(<span class="hljs-string">&quot;outputLog&quot;</span>, <span class="hljs-number">123</span>);<br><span class="hljs-keyword">await</span> module.InvokeVoidAsync(<span class="hljs-string">&quot;outputLog&quot;</span>, <span class="hljs-string">&quot;456&quot;</span>);<br><span class="hljs-keyword">await</span> module.InvokeVoidAsync(<span class="hljs-string">&quot;outputLog&quot;</span>, <span class="hljs-string">&quot;foo&quot;</span>);<br><span class="hljs-comment">// 数値を渡した場合は number へ、文字列を渡した場合は string へ変換される。</span><br><span class="hljs-comment">//   number 123</span><br><span class="hljs-comment">//   string 456</span><br><span class="hljs-comment">//   string foo</span><br><br><span class="hljs-comment">// enum MyEnum &#123; Value1 = 7, Value2 = 5, Value3 = 6 &#125;</span><br><span class="hljs-keyword">await</span> module.InvokeVoidAsync(<span class="hljs-string">&quot;outputLog&quot;</span>, MyEnum.Value1);<br><span class="hljs-keyword">await</span> module.InvokeVoidAsync(<span class="hljs-string">&quot;outputLog&quot;</span>, MyEnum.Value2);<br><span class="hljs-keyword">await</span> module.InvokeVoidAsync(<span class="hljs-string">&quot;outputLog&quot;</span>, MyEnum.Value3);<br><span class="hljs-comment">// 列挙型のメンバーは、対応する整数値へ変換される。</span><br><span class="hljs-comment">//   number 7</span><br><span class="hljs-comment">//   number 5</span><br><span class="hljs-comment">//   number 6</span><br><br><span class="hljs-keyword">var</span> sampleList = <span class="hljs-keyword">new</span> List&lt;<span class="hljs-built_in">string</span>&gt;() &#123; <span class="hljs-string">&quot;aaa&quot;</span>, <span class="hljs-string">&quot;bbb&quot;</span>, <span class="hljs-string">&quot;ccc&quot;</span> &#125;;<br><span class="hljs-keyword">await</span> module.InvokeVoidAsync(<span class="hljs-string">&quot;outputLog&quot;</span>, sampleList);<br><span class="hljs-keyword">await</span> module.InvokeVoidAsync(<span class="hljs-string">&quot;outputLog&quot;</span>, sampleList <span class="hljs-keyword">as</span> IEnumerable&lt;<span class="hljs-built_in">string</span>&gt;);<br><span class="hljs-comment">// IEnumerable インターフェイスを備えた型であれば配列へ変換される。</span><br><span class="hljs-comment">//   object (3) [&quot;aaa&quot;, &quot;bbb&quot;, &quot;ccc&quot;]</span><br><span class="hljs-comment">//   object (3) [&quot;aaa&quot;, &quot;bbb&quot;, &quot;ccc&quot;]</span><br><br><span class="hljs-comment">// class SampleClass</span><br><span class="hljs-comment">// &#123;</span><br><span class="hljs-comment">//    private string _X = &quot;private field&quot;;</span><br><span class="hljs-comment">//    public string X = &quot;public field&quot;;</span><br><span class="hljs-comment">//    private string _Y &#123; get; set; &#125; = &quot;private property&quot;;</span><br><span class="hljs-comment">//    public string Y &#123; get; set; &#125; = &quot;public property&quot;;</span><br><span class="hljs-comment">// &#125;</span><br><span class="hljs-keyword">var</span> sampleInstance = <span class="hljs-keyword">new</span> SampleClass();<br><span class="hljs-keyword">await</span> module.InvokeVoidAsync(<span class="hljs-string">&quot;outputLog&quot;</span>, sampleInstance);<br><span class="hljs-comment">// クラスインスタンスは public プロパティのみを含んだ object へ変換される。</span><br><span class="hljs-comment">//   object &#123;y: &quot;public property&quot;&#125;</span><br><br><span class="hljs-keyword">await</span> module.InvokeVoidAsync(<span class="hljs-string">&quot;outputLog&quot;</span>, <span class="hljs-keyword">new</span> Dictionary&lt;<span class="hljs-built_in">int</span>, <span class="hljs-built_in">string</span>&gt;() &#123;<br>    &#123; <span class="hljs-number">1</span>, <span class="hljs-string">&quot;value1&quot;</span> &#125;,<br>    &#123; <span class="hljs-number">2</span>, <span class="hljs-string">&quot;value2&quot;</span> &#125;,<br>    &#123; <span class="hljs-number">3</span>, <span class="hljs-string">&quot;value3&quot;</span> &#125;,<br>&#125;);<br><span class="hljs-comment">// Dictionary は object へ変換される。</span><br><span class="hljs-comment">//   object &#123;1: &quot;value1&quot;, 2: &quot;value2&quot;, 3: &quot;value3&quot;&#125;</span><br><br><span class="hljs-keyword">await</span> module.InvokeVoidAsync(<span class="hljs-string">&quot;outputLog&quot;</span>, <span class="hljs-keyword">new</span><br>&#123;<br>   Item1 = <span class="hljs-string">&quot;foo&quot;</span>,<br>   Item2 = <span class="hljs-string">&quot;hoo&quot;</span>,<br>   Item3 = <span class="hljs-number">123</span><br>&#125;);<br><span class="hljs-comment">// 匿名型も object へ変換される。</span><br><span class="hljs-comment">//   object &#123;item1: &quot;foo&quot;, item2: &quot;hoo&quot;, item3: 123&#125;</span><br><br><span class="hljs-keyword">var</span> sampleTuple = (<span class="hljs-number">909</span>, <span class="hljs-number">703</span>);<br><span class="hljs-keyword">await</span> module.InvokeVoidAsync(<span class="hljs-string">&quot;outputLog&quot;</span>, sampleTuple);<br><span class="hljs-keyword">await</span> module.InvokeVoidAsync(<span class="hljs-string">&quot;outputLog&quot;</span>, sampleTuple.ToString());<br><span class="hljs-comment">// Tuple は変換を行えない。</span><br><span class="hljs-comment">//   object &#123;&#125;</span><br><span class="hljs-comment">//   string (909, 703)</span><br><br><span class="hljs-keyword">var</span> sampleValueTuple = (x: <span class="hljs-number">123</span>, y: <span class="hljs-string">&quot;sample&quot;</span>);<br><span class="hljs-keyword">await</span> module.InvokeVoidAsync(<span class="hljs-string">&quot;outputLog&quot;</span>, sampleValueTuple);<br><span class="hljs-keyword">await</span> module.InvokeVoidAsync(<span class="hljs-string">&quot;outputLog&quot;</span>, sampleValueTuple.ToString());<br><span class="hljs-comment">// ValueTuple も同様。</span><br><span class="hljs-comment">//   object &#123;&#125;</span><br><span class="hljs-comment">//   string (123, sample)</span><br></code></pre></td></tr></table></figure>
+<p>この変換処理は以下の注意点があります。</p>
+<ul>
+<li> クラス インスタンスの持つプロパティ名は、先頭を小文字に変換される</li>
+<li> <code>Tuple</code> や <code>ValueTuple</code> といった型を持つ値は変換を行えない</li>
+</ul>
+<p><code>Tuple</code> が利用できないのは意外な気もしますが、JavaScript 側で対応するデータ構造がないことが理由なのかもしれません。</p>
+<h2 id="JavaScript-ライブラリを利用した処理をモジュールとして定義する"><a href="#JavaScript-ライブラリを利用した処理をモジュールとして定義する" class="headerlink" title="JavaScript ライブラリを利用した処理をモジュールとして定義する"></a>JavaScript ライブラリを利用した処理をモジュールとして定義する</h2><p>JavaScript Interop による関数の呼び出しと、関数へ渡した値が変換される際の挙動について確認しました。続いて、JavaScript ライブラリを用いて DOM を操作するパターンについて確認します。</p>
+<p>例として、Chart.js を利用して画面上へグラフを出力するまでの流れを確認します。</p>
+<p>Blazor のテンプレート プロジェクトでは、連日の気温を一覧表示する <code>FetchData.razor</code> というサンプル コンポーネントが含まれています（気温の数値自体はダミーデータとなっています）。これをもとに、気温の変化を日付順のグラフとして出力させます。</p>
+<p><img src="/img/20201212_01.png" alt="image.png"></p>
+<p>まず、Chart.js のライブラリ本体をダウンロードします。</p>
+<ul>
+<li> <a target="_blank" rel="noopener" href="https://misc.0o0o.org/chartjs-doc-ja/getting-started/installation.html" title="インストール · Chart.js 日本語ドキュメント">インストール · Chart.js 日本語ドキュメント</a></li>
+</ul>
+<p>これを <code>/wwwroot/js/lib</code> へ配置し、<code>/wwwroot/index.html</code> にライブラリへの参照を追加します。</p>
+<p>:wwwroot/index.html</p>
+<figure class="highlight diff"><table><tr><td class="code"><pre><code class="hljs diff">	&lt;head&gt;<br>	   &lt;meta charset=&quot;utf-8&quot; /&gt;<br>	   ... 中略<br>	   &lt;link rel=&quot;apple-touch-icon&quot; sizes=&quot;512x512&quot; href=&quot;icon-512.png&quot; /&gt;<br><span class="hljs-addition">+	   &lt;script src=&quot;js/lib/Chart.min.js&quot;&gt;&lt;/script&gt;</span><br>	&lt;/head&gt;<br></code></pre></td></tr></table></figure>
+<p><code>/wwwroot/js</code> 配下に、Chart.js を呼び出す以下のモジュールを定義します。</p>
+<p>:chart-companion.js</p>
+<figure class="highlight js"><table><tr><td class="code"><pre><code class="hljs js"><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createGraph</span>(<span class="hljs-params">context, graph</span>) </span>&#123;<br>   <span class="hljs-keyword">new</span> Chart(context, graph);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>Razor コンポーネント ファイル <code>FetchData.razor</code> にて <code>IJSRuntime</code> への参照と、グラフの出力先となる <code>canvas</code> 要素、要素への参照を格納する <code>ElementReference</code> 型のフィールドを追加します。</p>
+<p>:Pages/FetchData.razor</p>
+<figure class="highlight diff"><table><tr><td class="code"><pre><code class="hljs diff"><span class="hljs-addition">+	@inject IJSRuntime JSRuntime</span><br><br>	&lt;h1&gt;Weather forecast&lt;/h1&gt;<br>	... 中略<br><br>	@if (forecasts == null)<br>	&#123;<br>	   &lt;p&gt;&lt;em&gt;Loading...&lt;/em&gt;&lt;/p&gt;<br>	&#125;<br>	else<br>	&#123;<br><span class="hljs-addition">+	   &lt;canvas @ref=&quot;graphCanvas&quot;&gt;&lt;/canvas&gt;</span><br><span class="hljs-addition">+</span><br>	   &lt;table class=&quot;table&quot;&gt;<br>	      &lt;thead&gt;<br>	         &lt;tr&gt;<br>	    ... 中略<br>	&#125;<br><br>	@code &#123;<br>	   private WeatherForecast[] forecasts;<br><span class="hljs-addition">+	   private ElementReference graphCanvas;</span><br></code></pre></td></tr></table></figure>
+<p>上記 Razor コンポーネントに対するコードビハインドとして、<code>FetchData.razor.cs</code> を作成します。</p>
+<p>:Pages/FetchData.razor.cs</p>
+<figure class="highlight c#"><table><tr><td class="code"><pre><code class="hljs c#"><span class="hljs-keyword">namespace</span> <span class="hljs-title">BlazorSamples.Client.Pages</span><br>&#123;<br>   <span class="hljs-keyword">public</span> <span class="hljs-keyword">partial</span> <span class="hljs-keyword">class</span> <span class="hljs-title">FetchData</span> &#123; &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>こちらに Chart.js へ渡すパラメータと対応するデータクラスを定義します。</p>
+<p>:Pages/FetchData.razor.cs</p>
+<figure class="highlight c#"><table><tr><td class="code"><pre><code class="hljs c#"><span class="hljs-keyword">public</span> <span class="hljs-keyword">partial</span> <span class="hljs-keyword">class</span> <span class="hljs-title">FetchData</span><br>&#123;<br>   <span class="hljs-keyword">class</span> <span class="hljs-title">LineData</span><br>   &#123;<br>      <span class="hljs-keyword">public</span> <span class="hljs-built_in">string</span> Label &#123; <span class="hljs-keyword">get</span>; <span class="hljs-keyword">set</span>; &#125;<br>      <span class="hljs-keyword">public</span> IEnumerable&lt;<span class="hljs-built_in">int</span>&gt; Data &#123; <span class="hljs-keyword">get</span>; <span class="hljs-keyword">set</span>; &#125;<br>      <span class="hljs-keyword">public</span> <span class="hljs-built_in">double</span> Tension &#123; <span class="hljs-keyword">get</span>; <span class="hljs-keyword">set</span>; &#125; = <span class="hljs-number">0.5</span>;<br>      <span class="hljs-keyword">public</span> <span class="hljs-built_in">string</span> BorderColor &#123; <span class="hljs-keyword">get</span>; <span class="hljs-keyword">set</span>; &#125;<br>   &#125;<br><br>   <span class="hljs-keyword">class</span> <span class="hljs-title">LineGraphData</span><br>   &#123;<br>      <span class="hljs-keyword">public</span> IEnumerable&lt;<span class="hljs-built_in">string</span>&gt; Labels &#123; <span class="hljs-keyword">get</span>; <span class="hljs-keyword">set</span>; &#125;<br>      <span class="hljs-keyword">public</span> IEnumerable&lt;LineData&gt; Datasets &#123; <span class="hljs-keyword">get</span>; <span class="hljs-keyword">set</span>; &#125;<br>   &#125;<br><br>   <span class="hljs-keyword">class</span> <span class="hljs-title">LineGraph</span><br>   &#123;<br>      <span class="hljs-keyword">public</span> <span class="hljs-built_in">string</span> Type &#123; <span class="hljs-keyword">get</span>; &#125; = <span class="hljs-string">&quot;line&quot;</span>;<br>      <span class="hljs-keyword">public</span> LineGraphData Data &#123; <span class="hljs-keyword">get</span>; <span class="hljs-keyword">set</span>; &#125;<br>   &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>次に、これらデータクラスを用いてパラメータを構成する処理を追加します。</p>
+<p>:Pages/FetchData.razor.cs</p>
+<figure class="highlight c#"><table><tr><td class="code"><pre><code class="hljs c#"><span class="hljs-function"><span class="hljs-keyword">protected</span> <span class="hljs-keyword">async</span> <span class="hljs-keyword">void</span> <span class="hljs-title">CreateGraph</span>(<span class="hljs-params"></span>)</span><br><span class="hljs-function"></span>&#123;<br>   <span class="hljs-comment">// WeatherForecastService から得られたデータをグラフ出力用データに変換する</span><br>   <span class="hljs-keyword">var</span> temparetures = <span class="hljs-keyword">new</span> LineGraphData()<br>   &#123;<br>      <span class="hljs-comment">// 各データの日付をグラフの軸とする</span><br>      Labels = forecasts.Select(f =&gt; f.Date.ToShortDateString()),<br><br>      <span class="hljs-comment">// 摂氏／華氏それぞれの気温情報をグラフの要素として指定する</span><br>      Datasets = <span class="hljs-keyword">new</span> List&lt;LineData&gt;()<br>      &#123;<br>         <span class="hljs-keyword">new</span> LineData()<br>         &#123;<br>            Label = <span class="hljs-string">&quot;Temp. (C)&quot;</span>,<br>            Data = forecasts.Select(f =&gt; f.TemperatureC),<br>            BorderColor = <span class="hljs-string">&quot;coral&quot;</span>,<br>         &#125;,<br>         <span class="hljs-keyword">new</span> LineData()<br>         &#123;<br>            Label = <span class="hljs-string">&quot;Temp. (F)&quot;</span>,<br>            Data = forecasts.Select(f =&gt; f.TemperatureF),<br>            BorderColor = <span class="hljs-string">&quot;lightgreen&quot;</span>,<br>         &#125;<br>      &#125;<br>   &#125;;<br><br>   <span class="hljs-comment">// コンパニオン モジュールへデータを渡す</span><br>   <span class="hljs-keyword">var</span> module = <span class="hljs-keyword">await</span> JSRuntime.InvokeAsync&lt;IJSObjectReference&gt;(<br>      <span class="hljs-string">&quot;import&quot;</span>, <span class="hljs-string">&quot;./js/chart-companion.js&quot;</span><br>   );<br><br>   <span class="hljs-keyword">await</span> module.InvokeVoidAsync(<br>      <span class="hljs-string">&quot;createGraph&quot;</span>,<br>      graphCanvas,<br>      <span class="hljs-keyword">new</span> LineGraph() &#123; Data = temparetures &#125;<br>   );<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>上記関数の呼び出しを、ページの初期化処理中に追加します。</p>
+<p>:Pages/FetchData.razor</p>
+<figure class="highlight diff"><table><tr><td class="code"><pre><code class="hljs diff">	protected override async Task OnInitializedAsync()<br>	&#123;<br>	   forecasts = await Http.GetFromJsonAsync&lt;WeatherForecast[]&gt;(&quot;WeatherForecast&quot;);<br><span class="hljs-addition">+	   CreateGraph();</span><br>	&#125;<br></code></pre></td></tr></table></figure>
+<p>以上の変更により、画面上へ以下の通りグラフが出力されるようになりました。</p>
+<p><img src="/img/20201212_02.png" alt="image.png"></p>
+<p>ライブラリの関数を呼び出す JavaScript モジュールを用意することで、C# のコードから DOM を操作する手順について確認できたと思います。</p>
+<p>ここでは <code>FetchData.razor</code> コンポーネントへ直接 <code>canvas</code> 要素や各種データクラスを追加しましたが、実際にはグラフを描画する Razor コンポーネントとして定義することが推奨されます。こちらについては別途取り上げたいと思います。</p>
+<p><strong>参考:</strong></p>
+<ul>
+<li> <a target="_blank" rel="noopener" href="https://docs.microsoft.com/ja-jp/aspnet/core/blazor/call-javascript-from-dotnet?view=aspnetcore-5.0" title="ASP.NET Core Blazor で .NET メソッドから JavaScript 関数を呼び出す | Microsoft Docs">ASP.NET Core Blazor で .NET メソッドから JavaScript 関数を呼び出す | Microsoft Docs</a></li>
+</ul>
+
+         
+      </div>
+
+      <footer class="article-footer">
+         <a data-url="https://gaminessium.github.io/2020/12/12/blazor-use-js-library/" data-id="cko2hkr360002gyn9329dd378" data-title="Blazor から JavaScript ライブラリを利用する" class="article-share-link">
+            <a target="_blank" rel="noopener" href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false">Tweet</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+         </a>
+
+         
+
+         
+      </footer>
+   </div>
+
+   
+      
+   <nav id="article-nav">
+      
+         <a href="/2020/12/29/windows-shortcut-key-bind/"
+            id="article-nav-newer"
+            class="article-nav-link-wrap"
+            >君は「『Windows のショートカット』にショートカットを割り当てられる」ことを知っているか</a>
+      
+
+      
+         <a href="/2020/04/26/windows-package-management/"
+            id="article-nav-older"
+            class="article-nav-link-wrap"
+            >パッケージマネージャーを利用して Windows に docker-cli を導入する</a>
+      
+   </nav>
+
+
+   
+</article>
+
+
+
+
+
+</div>
+
+
+      </main>
+
+      <footer class="footer">
+   <aside id="sidebar">
+   
+      
+   <div class="widget-wrap">
+      <h3 class="widget-title">categories</h3>
+      <div class="widget">
+         <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/NET/">.NET</a><span class="category-list-count">1</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/NET/ASP-NET/">ASP.NET</a><span class="category-list-count">1</span></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/PowerShell/">PowerShell</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Windows/">Windows</a><span class="category-list-count">1</span></li></ul>
+      </div>
+   </div>
+
+
+   
+</aside>
+
+
+   <small>&copy; 2021 gaminessium</small>
+</footer>
+
+   </div>
+</body>
+
+</html>
